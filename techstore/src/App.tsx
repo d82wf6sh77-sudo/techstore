@@ -11,10 +11,14 @@ function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
+  const [sortOrder, setSortOrder] = useState("Orden original");
+  const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
+  const [favorites, setFavorites] = useState<number[]>([]);
 
   const categories = [...new Set(products.map((product) => product.category))];
 
-  const filteredProducts = products.filter((product) => {
+  let filteredProducts = products.filter((product) => {
     const matchesSearch = product.name
       .toLowerCase()
       .includes(search.toLowerCase());
@@ -23,10 +27,28 @@ function App() {
       selectedCategory === "Todos" ||
       product.category === selectedCategory;
 
-    return matchesSearch && matchesCategory;
+    const matchesAvailability = !onlyAvailable || product.stock > 0;
+    const matchesFavorites = !showOnlyFavorites || favorites.includes(product.id);
+
+    return matchesSearch && matchesCategory && matchesAvailability && matchesFavorites;
   });
 
+  if (sortOrder === "Precio menor") {
+    filteredProducts.sort((a, b) => a.price - b.price);
+  } else if (sortOrder === "Precio mayor") {
+    filteredProducts.sort((a, b) => b.price - a.price);
+  }
+
+  function toggleFavorite(productId: number) {
+    setFavorites((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  }
+
   const totalUnits = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   function addToCart(product: Product) {
     setCart((currentCart) => {
@@ -88,7 +110,7 @@ function App() {
 
   return (
     <>
-      <Header cartCount={totalUnits} />
+      <Header cartCount={totalUnits} cartTotal={totalPrice} onClear={clearCart} />
 
       <main id="inicio">
         <section className="hero">
@@ -103,15 +125,31 @@ function App() {
           search={search}
           selectedCategory={selectedCategory}
           categories={categories}
+          sortOrder={sortOrder}
+          onlyAvailable={onlyAvailable}
+          showOnlyFavorites={showOnlyFavorites}
+          favoritesCount={favorites.length}
           onSearchChange={setSearch}
           onCategoryChange={setSelectedCategory}
+          onSortOrderChange={setSortOrder}
+          onOnlyAvailableChange={setOnlyAvailable}
+          onShowOnlyFavoritesChange={setShowOnlyFavorites}
+          onClearFilters={() => {
+            setSearch("");
+            setSelectedCategory("Todos");
+            setSortOrder("Orden original");
+            setOnlyAvailable(false);
+            setShowOnlyFavorites(false);
+          }}
         />
 
         <div className="shop-layout">
           <ProductList
             products={filteredProducts}
             cart={cart}
+            favorites={favorites}
             onAdd={addToCart}
+            onToggleFavorite={toggleFavorite}
           />
 
           <CartSummary

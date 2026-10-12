@@ -5,4 +5,5 @@ export interface Product {
   category: string;
   emoji: string;
   stock: number;
+  description?: string;
 }

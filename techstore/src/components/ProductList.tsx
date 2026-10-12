@@ -5,17 +5,25 @@ import { ProductCard } from "./ProductCard";
 interface ProductListProps {
   products: Product[];
   cart: CartItem[];
+  favorites: number[];
   onAdd: (product: Product) => void;
+  onToggleFavorite: (productId: number) => void;
 }
 
-export function ProductList({ products, cart, onAdd }: ProductListProps) {
+export function ProductList({ products, cart, favorites, onAdd, onToggleFavorite }: ProductListProps) {
   if (products.length === 0) {
     return <p className="no-results">No encontramos productos.</p>;
   }
 
   return (
     <section>
-      <h2>Productos destacados</h2>
+      <header className="product-list-header">
+        <div>
+          <span className="catalog-subtitle">CATÁLOGO</span>
+          <h2>Productos destacados</h2>
+        </div>
+        <span className="product-count">{products.length} productos</span>
+      </header>
 
       <div className="product-grid">
         {products.map((product) => {
@@ -26,7 +34,9 @@ export function ProductList({ products, cart, onAdd }: ProductListProps) {
               key={product.id}
               product={product}
               quantityInCart={cartItem?.quantity ?? 0}
+              isFavorite={favorites.includes(product.id)}
               onAdd={onAdd}
+              onToggleFavorite={() => onToggleFavorite(product.id)}
             />
           );
         })}
